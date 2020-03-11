@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Travaux pratiques - Introduction à Spark et Scala &#8212; Cours Cnam RCP216</title>
+    <link rel="stylesheet" href="_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/notebook.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Recherche" href="search.html" />
+    <link rel="next" title="Cours - Réduction de l’ordre de complexité" href="coursReductionComplexite.html" />
+    <link rel="prev" title="Cours - Réduction du volume de données" href="coursReductionVolume.html" />
+<link rel="stylesheet"
+href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+      <link rel="stylesheet" href="/resources/demos/style.css">
+<style>
+  .toggler {
+  }
+  #button {
+    padding: .5em 1em;
+    text-decoration: none;
+  }
+  #effect {
+  }
+  </style>
+  <script>
+  $(function() {
+    // run the currently selected effect
+    function runEffect() {
+      // get effect type from
+      var selectedEffect = "clip";
+ 
+      // most effect types need no options passed by default
+      var options = {};
+      // some effects have required parameters
+      if ( selectedEffect === "scale" ) {
+        options = { percent: 0 };
+      } else if ( selectedEffect === "size" ) {
+        options = { to: { width: 200, height: 60 } };
+      }
+ 
+      // run the effect
+      $( "#effect" ).toggle( selectedEffect, options, 500 );
+    };
+ 
+    // set effect from select menu value
+    $( "#button" ).click(function() {
+      runEffect();
+    });
+  })
+  </script>
+  <script>
+  $(function() {
+        $( ".tabs" ).tabs();
+          });
+  </script>
+
+  <script type="text/javascript" src="_static/dynsite.js"></script>
+
+
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="index.html">Cours Cnam RCP216</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="coursReductionVolume.html" title="Cours - Réduction du volume de données"
+             accesskey="P">précédent</a> |
+          <a href="coursReductionComplexite.html" title="Cours - Réduction de l’ordre de complexité"
+             accesskey="N">suivant</a> |
+          <a href="genindex.html" title="Index général"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="travaux-pratiques-introduction-a-spark-et-scala">
+<span id="chap-tpsparkscala"></span><h1>Travaux pratiques - Introduction à Spark et Scala<a class="headerlink" href="#travaux-pratiques-introduction-a-spark-et-scala" title="Lien permanent vers ce titre">¶</a></h1>
+<div class="notebook docutils container">
+<img alt="_images/zeppelin_classic_logo.png" class="svg-inline" src="_images/zeppelin_classic_logo.png" />
+<p><a class="reference external" href="jupyter/tpSparkScala.json">Cahier Zeppelin</a></p>
+</div>
+<p>(<a class="reference external" href="tpSparkScalaRDD.html">la version précédente de cette séance, utilisant l’API RDD</a>)</p>
+<p>Références externes utiles :</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://spark.apache.org/docs/latest/">Documentation Spark</a></p></li>
+<li><p><a class="reference external" href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.package">Documentation API Spark en Scala</a></p></li>
+<li><p><a class="reference external" href="http://docs.scala-lang.org">Documentation Scala</a></p></li>
+</ul>
+</div></blockquote>
+<p><strong>L’objectif</strong> de cette première séance de TP est d’introduire l’interpréteur de commandes de Spark en langage Scala, quelques opérations de base sur les structures de données distribuées que sont les <em>DataFrame</em>, ainsi que quelques notions simples et indispensables concernant le langage Scala.</p>
+<p>Pour les séances de travaux pratiques, Spark est installé sur un système d’exploitation Linux. Si vous n’êtes pas familier avec les commandes Linux, il est utile de consulter au préalable <a class="reference external" href="http://wiki.linux-france.org/wiki/Les_commandes_fondamentales_de_Linux">ce site</a>.</p>
+<p>Les exemples ci-dessous reprennent, en partie, ceux des documentations en ligne de Spark.</p>
+<div class="section" id="spark-concepts-de-base-avec-exemples">
+<h2>Spark : concepts de base avec exemples<a class="headerlink" href="#spark-concepts-de-base-avec-exemples" title="Lien permanent vers ce titre">¶</a></h2>
+<p>Dans les salles de travaux pratiques (TP), lors du démarrage de l’ordinateur, choisissez la configuration <code class="docutils literal notranslate"><span class="pre">openSUSE</span></code>. Après l’ouverture de session, ouvrez une fenêtre de type terminal. Dans cette fenêtre vous pouvez entrer des commandes Linux qui sont traitées par un interpréteur de commandes spécifiques (<code class="docutils literal notranslate"><span class="pre">bash</span></code> dans le cas particulier des salles de TP, terme générique <code class="docutils literal notranslate"><span class="pre">shell</span></code>).</p>
+<p>Dans les salles, Spark est installé directement dans Linux (distribution <code class="docutils literal notranslate"><span class="pre">openSUSE</span></code>) et, dans la suite, certaines commandes système sont spécifiques à cette configuration. Si vous installez Spark d’une autre façon (machine virtuelle ou machine personnelle), il sera peut-être nécessaire d’adapter les commandes système.</p>
+<p>Pour réaliser le projet de cette unité d’enseignement, il vous sera nécessaire d’installer Spark sur un ordinateur auquel vous avez accès en permanence. Suivez <a class="reference external" href="http://cedric.cnam.fr/vertigo/Cours/RCP216/installationSpark.html">ces instructions d’installation de Spark</a> et signalez les éventuelles difficultés rencontrées (après avoir quand même cherché vous-même des solutions dans des forums sur le web).</p>
+<p>Il est possible d’utiliser Spark à partir des langages Java, Scala, Python ou (dans une moindre mesure) R</p>
+<ul class="simple">
+<li><p>à travers une interface en ligne de commandes (en Scala ou Python), pratique aussi bien pour des tests interactifs que pour l’étape de mise au point d’une nouvelle application,</p></li>
+<li><p>en écrivant (et en exécutant ensuite) un programme (voir la séance de TP suivante).</p></li>
+</ul>
+<p>Certaines librairies ayant été développées seulement en Scala, une application écrite en Java ou en Python doit les appeler pour employer leurs fonctionnalités. Dans ces séances de TP nous nous servirons exclusivement de Scala.</p>
+<div class="section" id="lancement-de-l-interpreteur-de-commandes-en-scala-et-operations-simples">
+<h3>Lancement de l’interpréteur de commandes en Scala et opérations simples<a class="headerlink" href="#lancement-de-l-interpreteur-de-commandes-en-scala-et-operations-simples" title="Lien permanent vers ce titre">¶</a></h3>
+<p>Pour ce premier TP, nous utiliserons l’interpréteur de commandes <code class="docutils literal notranslate"><span class="pre">spark-shell</span></code>. Il s’agit d’une invite de commandes interactive permettant de communiquer directement avec un <em>cluster</em> Spark local.</p>
+<p>Commençons par ouvrir un terminal (Windows ou MacOS/Linux).
+Vérifiez la présence du fichier <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> (LICENSE avec « S » car en anglais) et copiez-le dans un répertoire <code class="docutils literal notranslate"><span class="pre">tpintro</span></code> à créer :</p>
+<p>(<strong>attention</strong> : les commandes qui suivent <code class="docutils literal notranslate"><span class="pre">%%bash</span></code> sont à rentrer dans le terminal)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%%bash
+ls /opt/spark/LICENSE
+mkdir tpintro <span class="c1"># Créé un dossier nommé tpintro</span>
+<span class="nb">cd</span> tpintro <span class="c1"># Se place dans le dossier tpintro</span>
+cp /opt/spark/LICENSE .  <span class="c1"># Copie le fichier LICENSE dans le dossier</span>
+</pre></div>
+</div>
+<p>Si vous avez installé Spark sur votre ordinateur personnel, dans les commandes ci-dessus remplacez le répertoire <code class="docutils literal notranslate"><span class="pre">/opt/spark</span></code> par celui dans lequel se trouve Spark sur cet ordinateur.</p>
+<p>Lancez ensuite dans cette fenêtre l’interpréteur de commandes <code class="docutils literal notranslate"><span class="pre">spark-shell</span></code> en entrant</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>spark-shell
+</pre></div>
+</div>
+<p>Créez un <em>Dataset</em> à partir du fichier texte <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> en entrant dans l’interpréteur <code class="docutils literal notranslate"><span class="pre">spark-shell</span></code> :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">texteLicence</span> <span class="k">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;LICENSE&quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Si vous avez fait une faute de frappe ou de recopie et ne comprenez pas ce qui s’affiche dans la fenêtre, consultez le message d’erreur qui s’affiche afin de comprendre le problème.
+Les erreurs communes sont des fautes de frappe dans le nom des variables et des erreurs dans le syntaxe de Scala.
+En cas de blocage, vous pouvez appeler l’enseignant.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">spark</span></code> est un objet <code class="docutils literal notranslate"><span class="pre">SparkSession</span></code> qui comporte un certain nombre d’informations de configuration (par ex., indique à Spark comment accéder à un <em>cluster</em> pour exécuter les commandes). Dans ce TP les commandes seront exécutées sur un seul nœud, qui est celui sur lequel vous entrez les commandes et sur lequel tourne le programme <em>driver</em> de Spark.</p>
+<p>Visualisez le fichier <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code>. Pour cela, il faut ouvrir une seconde fenêtre terminal. Allez ensuite dans le répertoire où se trouve le fichier <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> et examinez-le :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%%bash
+cat tpintro/LICENSE
+<span class="c1"># Ou bien sous Windows : type tpintro/LICENSE</span>
+</pre></div>
+</div>
+<p>La commande <code class="docutils literal notranslate"><span class="pre">cat</span></code> (sous Windows, <code class="docutils literal notranslate"><span class="pre">type</span></code>) permet d’afficher le contenu d’un fichier, en l’occurrence ici du texte.</p>
+</div>
+<div class="section" id="dataset-et-dataframe">
+<h3><em>Dataset</em> et <em>DataFrame</em><a class="headerlink" href="#dataset-et-dataframe" title="Lien permanent vers ce titre">¶</a></h3>
+<p>Un <em>Dataset</em> est une collection distribuée de données. Il peut être vu comme une évolution conceptuelle des RDD (<em>Resilient Distributed Datasets</em>), historiquement la première structure de données distribuée employée par Spark. Un <em>DataFrame</em> est un <em>Dataset</em> organisé en colonnes qui portent des noms, comme les tables d’une base de données. Avec l’interface de programmation en Scala, le type <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> est simplement l’alias du type <code class="docutils literal notranslate"><span class="pre">Dataset[Row]</span></code>.</p>
+<p>Il est utile de lire <a class="reference external" href="https://databricks.com/blog/2016/07/14/a-tale-of-three-apache-spark-apis-rdds-dataframes-and-datasets.html">ces explications préparées par les créateurs de Spark</a> pour mieux comprendre l’intérêt de chacune des interfaces de programmation (API) <em>RDD</em> et <em>Dataset / Dataframe</em>.</p>
+<p>Il est possible d’appliquer aux <em>Datasets</em> des <strong>actions</strong>, qui produisent des valeurs, et des <strong>transformations</strong>, qui produisent de nouveaux <em>Datasets</em>, ainsi que certaines fonctions qui n’entrent dans aucune de ces deux catégories.</p>
+<p>Quelques <strong>actions</strong> simples :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">texteLicence</span><span class="o">.</span><span class="n">count</span><span class="o">()</span> <span class="c1">// nombre de lignes dans ce Dataset</span>
+</pre></div>
+</div>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">texteLicence</span><span class="o">.</span><span class="n">first</span><span class="o">()</span> <span class="c1">// première ligne de ce Dataset</span>
+</pre></div>
+</div>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">texteLicence</span><span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span> <span class="c1">// 5 premières lignes de ce Dataset</span>
+</pre></div>
+</div>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">texteLicence</span><span class="o">.</span><span class="n">collect</span><span class="o">()</span> <span class="c1">// retourne une partie du contenu de ce Dataset</span>
+</pre></div>
+</div>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>À quoi correspond une ligne de ce <em>Dataset</em> ?</p>
+</div>
+<p>L’exécution d’une action comme <code class="docutils literal notranslate"><span class="pre">count</span></code> sur un très grand <em>Dataset</em> se déroule de la manière suivante : le <em>Dataset</em> est composé de fragments, chacun stocké sur un nœud de calcul ; chaque fragment contient un (grand) nombre de lignes ; le programme <em>driver</em> de Spark envoie à chaque nœud le traitement à faire ; chaque nœud de calcul exécute le traitement sur le fragment local et transmet les résultats au <em>driver</em>. Pour d’autres actions (comme <code class="docutils literal notranslate"><span class="pre">first</span></code>) seul un fragment est nécessaire donc un seul nœud est sollicité.</p>
+<p>Quelques <strong>transformations</strong> simples :</p>
+<ul class="simple">
+<li><p>Construire un <em>Dataset</em> comprenant seulement les lignes de <code class="docutils literal notranslate"><span class="pre">texteLicence</span></code> qui contiennent « Copyright », retourner un tableau avec ses 2 premières lignes :</p></li>
+</ul>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">lignesAvecCopyright</span> <span class="k">=</span> <span class="n">texteLicence</span><span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="n">line</span> <span class="k">=&gt;</span> <span class="n">line</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="s">&quot;Copyright&quot;</span><span class="o">))</span>
+<span class="n">lignesAvecCopyright</span><span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span> <span class="c1">// tableau avec les 2 premières lignes de ce Dataset</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Construire un <em>Dataset</em> composé des longueurs des lignes de <code class="docutils literal notranslate"><span class="pre">texteLicence</span></code>, retourner un tableau avec ses 5 premières lignes :</p></li>
+</ul>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">longueursLignes</span> <span class="k">=</span> <span class="n">texteLicence</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">l</span> <span class="k">=&gt;</span> <span class="n">l</span><span class="o">.</span><span class="n">length</span><span class="o">)</span>
+<span class="n">longueursLignes</span><span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span> <span class="c1">// tableau avec les 5 premières lignes de ce Dataset</span>
+</pre></div>
+</div>
+<p>Dans ces exemples, les expressions <code class="docutils literal notranslate"><span class="pre">l</span> <span class="pre">=&gt;</span> <span class="pre">l.contains(&quot;Copyright&quot;)</span></code> et <code class="docutils literal notranslate"><span class="pre">l</span> <span class="pre">=&gt;</span> <span class="pre">l.length</span></code> sont des définitions de « fonctions anonymes » (voir les éléments de Scala plus loin). Elles indiquent comment transformer chaque ligne du <em>Dataset</em> ; <code class="docutils literal notranslate"><span class="pre">l</span></code> est ainsi implicitement assimilé à une ligne générique du <em>Dataset</em>. Il est possible d’utiliser le nom de votre choix à la place de <code class="docutils literal notranslate"><span class="pre">l</span></code>, comme <code class="docutils literal notranslate"><span class="pre">ligne</span></code>, <code class="docutils literal notranslate"><span class="pre">line</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">toto</span></code>, etc.</p>
+<p>L’exécution d’une transformation comme <code class="docutils literal notranslate"><span class="pre">map</span></code> sur un très grand <em>Dataset</em> se déroule de la manière suivante : le <em>Dataset</em> est composé de fragments, chacun stocké sur un nœud de calcul ; le programme <em>driver</em> de Spark envoie à chaque nœud le traitement à faire ; chaque nœud de calcul exécute le traitement sur le fragment local et conserve les résultats localement.</p>
+<p><strong>Enchaînements</strong> de transformations et d’actions :</p>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>Combien de lignes contiennent <code class="docutils literal notranslate"><span class="pre">Copyright</span></code> ? Écrire la commande nécessaire dans <code class="docutils literal notranslate"><span class="pre">spark-shell</span></code> et vérifier dans un terminal (<code class="docutils literal notranslate"><span class="pre">bash</span></code>) Linux.</p>
+</div>
+<p>Pour vérifier, entrez dans un terminal (hors spark-shell) Linux ou MacOS :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%%bash
+<span class="nb">cd</span> tpintro
+cat LICENSE <span class="p">|</span> grep Copyright <span class="p">|</span> wc
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">LICENSE</span></code> retourne le contenu du fichier <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code>. Le caractère <code class="docutils literal notranslate"><span class="pre">|</span></code> indique que la sortie de la commande qui précède ne doit pas être retourné à la console mais envoyé vers la commande qui suit (c’est un enchaînement de commandes ou <em>pipe</em> Linux). <code class="docutils literal notranslate"><span class="pre">grep</span> <span class="pre">Copyright</span></code> retourne les lignes du fichier d’entrée (ici <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> envoyé par la commande précédente) qui contiennent le « motif » (<em>pattern</em>) <code class="docutils literal notranslate"><span class="pre">Copyright</span></code>. Ces lignes sont envoyées (encore <code class="docutils literal notranslate"><span class="pre">|</span></code>) vers la commande Linux <code class="docutils literal notranslate"><span class="pre">wc</span></code> qui retourne le nombre total de lignes, de « mots » (séquences de caractères séparées par des espaces et assimilés) et de caractères du fichier reçu en entrée (ici, les lignes de <code class="docutils literal notranslate"><span class="pre">LICENSE</span></code> contenant <code class="docutils literal notranslate"><span class="pre">Copyright</span></code>).</p>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>Combien de caractères contient le fichier ?</p>
+</div>
+<p><strong>Important :</strong> l’évaluation est « paresseuse » : les opérations sont effectuées seulement quand un résultat doit être retourné. Par exemple, dans la séquence</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">texteLicence</span> <span class="k">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;LICENSE&quot;</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">longueursLignes</span> <span class="k">=</span> <span class="n">texteLicence</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">l</span> <span class="k">=&gt;</span> <span class="n">l</span><span class="o">.</span><span class="n">length</span><span class="o">)</span>
+<span class="n">longueursLignes</span><span class="o">.</span><span class="n">reduce</span><span class="o">((</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>les données ne sont pas chargées en mémoire après la première ligne et <code class="docutils literal notranslate"><span class="pre">longueursLignes</span></code> n’est pas construit immédiatement après la transformation <code class="docutils literal notranslate"><span class="pre">map</span></code> de la seconde ligne. Ce n’est qu’au moment où l’action <code class="docutils literal notranslate"><span class="pre">reduce</span></code> doit être exécutée que Spark partitionne les calculs à faire en tâches pour les différentes machines (et/ou cœurs) et chaque machine (et/ou cœur) exécute sa partie de <code class="docutils literal notranslate"><span class="pre">map</span></code> et de <code class="docutils literal notranslate"><span class="pre">reduce</span></code>, avant de retourner la réponse au programme <em>driver</em> (qui contrôle l’exécution).</p>
+<p>En conséquence, lorsque <code class="docutils literal notranslate"><span class="pre">spark-shell</span></code> vous signale une erreur, il est possible que cette erreur ne provienne pas de la dernière instruction que vous avez écrite mais d’une instruction antérieure. Pour cela, lorsque vous mettez en place une chaîne de traitement en vous servant de <code class="docutils literal notranslate"><span class="pre">spark-shell</span></code>, il est utile d’entrer de temps en temps des actions simples (comme <code class="docutils literal notranslate"><span class="pre">longueursLignes.take(2)</span></code> ici) pour identifier plus facilement les éventuelles erreurs.</p>
+<p>Examinons plus attentivement l’action <code class="docutils literal notranslate"><span class="pre">reduce((a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">b)</span></code> de l’exemple précédent. L’expression <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span></code> est une définition de « fonction anonyme » (voir les éléments de Scala plus loin) qui indique comment transformer une paire de lignes du <em>Dataset</em> ; <code class="docutils literal notranslate"><span class="pre">a</span></code> et <code class="docutils literal notranslate"><span class="pre">b</span></code> sont ainsi implicitement assimilés à deux lignes génériques du <em>Dataset</em>. Il est possible d’utiliser le nom de votre choix à la place de <code class="docutils literal notranslate"><span class="pre">a</span></code> ou <code class="docutils literal notranslate"><span class="pre">b</span></code>. Le déroulement de cette action est le suivant : chaque nœud, sur le fragment local du <em>Dataset</em>, remplace chaque paire de lignes par leur somme, ensuite applique de nouveau cette opération jusqu’à ce qu’il obtienne une seule valeur (qui sera dans ce cas la somme des valeurs de toutes les lignes) ; ces résultats sont transmis au <em>driver</em> qui les additionne pour obtenir la somme globale.</p>
+<p>Si vous souhaitez supprimer les nombreuses lignes d’information qui précèdent la réponse (vous pouvez faire cela sur votre installation de Spark, pas sur celle de la salle de TP), dans le répertoire <code class="docutils literal notranslate"><span class="pre">conf</span></code> copiez <code class="docutils literal notranslate"><span class="pre">log4j.properties.template</span></code> en <code class="docutils literal notranslate"><span class="pre">log4j.properties</span></code> et, dans ce dernier fichier, ligne <code class="docutils literal notranslate"><span class="pre">log4j.rootCategory=INFO</span></code>, remplacez <code class="docutils literal notranslate"><span class="pre">INFO</span></code> par <code class="docutils literal notranslate"><span class="pre">WARN</span></code>. Sur les ordinateurs de la salle de TP, par défaut vous n’avez pas le droit d’écrire dans ce répertoire, il vous faudra précéder les commandes de copie et d’appel de l’éditeur de <code class="docutils literal notranslate"><span class="pre">sudo</span></code>. Dans une fenêtre terminal (<code class="docutils literal notranslate"><span class="pre">bash</span></code>), à ouvrir séparément de la fenêtre Spark, entrez les commandes :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /opt/spark/conf
+sudo cp log4j.properties.template log4j.properties
+sudo gedit log4j.properties
+</pre></div>
+</div>
+<p>Dans <code class="docutils literal notranslate"><span class="pre">gedit</span></code>, ligne <code class="docutils literal notranslate"><span class="pre">log4j.rootCategory=INFO</span></code>, remplacez <code class="docutils literal notranslate"><span class="pre">INFO</span></code> par <code class="docutils literal notranslate"><span class="pre">WARN</span></code>. Pour rappel, ci-dessus <code class="docutils literal notranslate"><span class="pre">$</span></code> est le prompt système dans la fenêtre <code class="docutils literal notranslate"><span class="pre">bash</span></code>.</p>
+</div>
+<div class="section" id="actions">
+<h3>Actions<a class="headerlink" href="#actions" title="Lien permanent vers ce titre">¶</a></h3>
+<p>Dans les exemples précédents, <code class="docutils literal notranslate"><span class="pre">count</span></code>, <code class="docutils literal notranslate"><span class="pre">first</span></code>, <code class="docutils literal notranslate"><span class="pre">take</span></code>, <code class="docutils literal notranslate"><span class="pre">collect</span></code> et <code class="docutils literal notranslate"><span class="pre">reduce</span></code> sont des exemples d’actions.</p>
+<p>Voici ci-dessous quelques actions parmi les plus utilisées. Consulter la documentation (<a class="reference external" href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.Dataset">Scala</a>) pour une liste complète et des spécifications détaillées.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">reduce(func)</span></code>                 | Agréger les éléments du <em>Dataset</em> en utilisant la fonction <code class="docutils literal notranslate"><span class="pre">func</span></code> (qui prend 2 arguments et retourne 1 résultat). La fonction devrait être associative et commutative pour être correctement calculée en parallèle.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">collect()</span></code>                    | Retourner toutes les lignes du <em>Dataset</em> comme un tableau au programme <em>driver</em>. À utiliser seulement si le <em>Dataset</em> a un volume faible (par ex., après des opérations de type <code class="docutils literal notranslate"><span class="pre">filter</span></code> <strong>très</strong> sélectives).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">count()</span></code>                      | Retourner le nombre de lignes du  <em>Dataset</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">take(n)</span></code>                      | Retourner un tableau avec les <code class="docutils literal notranslate"><span class="pre">n</span></code> premières lignes du <em>Dataset</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">head(n)</span></code>                      | Retourner un tableau avec les <code class="docutils literal notranslate"><span class="pre">n</span></code> premières lignes du <em>Dataset</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">first()</span></code>                      | Retourner la première ligne du <em>Dataset</em> (similaire à <code class="docutils literal notranslate"><span class="pre">take(1)</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">show(n)</span></code>                      | Afficher les <code class="docutils literal notranslate"><span class="pre">n</span></code> premières lignes du <em>Dataset</em> sous forme de tableau.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">foreach(func)</span></code>                | Appliquer la fonction <code class="docutils literal notranslate"><span class="pre">func</span></code> à toutes les lignes.</p></li>
+</ul>
+</div>
+<div class="section" id="transformations-et-persistance">
+<h3>Transformations et persistance<a class="headerlink" href="#transformations-et-persistance" title="Lien permanent vers ce titre">¶</a></h3>
+<p>Les transformations peuvent
+* produire un <em>Dataset</em> à partir d’un autre <em>Dataset</em> : <code class="docutils literal notranslate"><span class="pre">map</span></code>, <code class="docutils literal notranslate"><span class="pre">filter</span></code>, <code class="docutils literal notranslate"><span class="pre">sort</span></code>, etc.
+* produire un <em>Dataset</em> à partir de deux <em>Dataset</em> : <code class="docutils literal notranslate"><span class="pre">union</span></code>, <code class="docutils literal notranslate"><span class="pre">join</span></code>, <code class="docutils literal notranslate"><span class="pre">crossJoin</span></code>, etc.
+* produire 0 ou plusieurs <em>Dataset</em> à partir d’un <em>Dataset</em> : <code class="docutils literal notranslate"><span class="pre">flatMap</span></code>.</p>
+<p>Un exemple avec <code class="docutils literal notranslate"><span class="pre">flatMap</span></code> : à partir de <code class="docutils literal notranslate"><span class="pre">texteLicence</span></code>, obtenir un <em>Dataset</em> <code class="docutils literal notranslate"><span class="pre">motsTexteLicence</span></code> ayant comme lignes les mots des différentes lignes de <code class="docutils literal notranslate"><span class="pre">texteLicence</span></code> et le rendre persistant pour faciliter des traitements ultérieurs.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">motsTexteLicence</span> <span class="k">=</span> <span class="n">texteLicence</span><span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="n">line</span> <span class="k">=&gt;</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="s">&quot; &quot;</span><span class="o">))</span>
+<span class="n">motsTexteLicence</span><span class="o">.</span><span class="n">persist</span><span class="o">()</span>
+</pre></div>
+</div>
+<p>Les lignes (du <em>Dataset</em> <code class="docutils literal notranslate"><span class="pre">texteLicence</span></code>) sont divisées en mots séparés par des espaces. <code class="docutils literal notranslate"><span class="pre">motsTexteLicence</span></code> n’est pas calculé immédiatement (évaluation paresseuse) mais le sera au moment où un résultat devra être retourné. Avec <code class="docutils literal notranslate"><span class="pre">.persist()</span></code> (ou <code class="docutils literal notranslate"><span class="pre">.cache()</span></code>), Spark cherchera à conserver ce <em>Dataset</em> en mémoire <strong>une fois qu’il sera calculé</strong>.</p>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>Comptez le nombre d’occurrences de chaque mot et affichez les 10 premières lignes résultantes. Indication pour la solution : <code class="docutils literal notranslate"><span class="pre">.groupByKey(identity).count()</span></code> permet de compter le nombre d’occurrences de chaque mot (les mots sont groupés par leur « identité », ensuite les occurrences comptées).</p>
+</div>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>Retournez la valeur maximale et la moyenne du nombre de mots des lignes du fichier.</p>
+</div>
+<p>Bien entendu, il est possible d’enchaîner directement les opérations :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">texteLicence</span><span class="o">.</span><span class="n">flatMap</span><span class="o">(</span><span class="n">line</span> <span class="k">=&gt;</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="s">&quot; &quot;</span><span class="o">)).</span><span class="n">groupByKey</span><span class="o">(</span><span class="n">identity</span><span class="o">).</span><span class="n">count</span><span class="o">().</span><span class="n">show</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>Noter que dans les fonctions anonymes comme <code class="docutils literal notranslate"><span class="pre">line</span> <span class="pre">=&gt;</span> <span class="pre">line.split(&quot;</span> <span class="pre">&quot;)</span></code> il est possible d’utiliser une autre notation pour les lignes des <em>Datasets</em> correspondants, par exemple <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">=&gt;</span> <span class="pre">a.split(&quot;</span> <span class="pre">&quot;)</span></code> ; le mot « line » n’a pas de signification particulière pour le programme (il rappelle simplement au programmeur la signification des lignes de ces <em>Datasets</em>).</p>
+<p>Il est possible de décrire le schéma d’un <em>Dataset</em> (<em>DataFrame</em>) :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">motsTexteLicence</span><span class="o">.</span><span class="n">printSchema</span><span class="o">()</span>
+</pre></div>
+</div>
+<p>Dans ce cas, une seule colonne est présente et se nomme « value » (nom par défaut).</p>
+<p>Il est possible d’obtenir un nouveau <em>DataFrame</em> comme résultat d’une requête SQL :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">motsTexteLicence</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="o">(</span><span class="s">&quot;mots&quot;</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">apresT</span> <span class="k">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">sql</span><span class="o">(</span><span class="s">&quot;SELECT value FROM mots WHERE value &gt; &#39;t&#39;&quot;</span><span class="o">)</span>
+<span class="n">apresT</span><span class="o">.</span><span class="n">show</span><span class="o">()</span>
+</pre></div>
+</div>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>Que contient <code class="docutils literal notranslate"><span class="pre">apresT</span></code> ?</p>
+</div>
+<p>Voici maintenant quelques transformations parmi les plus utilisées. Consulter la documentation (<a class="reference external" href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.Dataset">Scala</a>) pour une liste complète et des spécifications détaillées.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">map(func)</span></code>                          | Retourne un nouveau <em>Dataset</em> obtenu en appliquant la fonction <code class="docutils literal notranslate"><span class="pre">func</span></code> à chaque ligne du <em>Dataset</em> de départ.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">filter(func)</span></code>                       | Retourne un nouveau <em>Dataset</em> obtenu en sélectionnant les lignes de la source pour lesquelles la fonction <code class="docutils literal notranslate"><span class="pre">func</span></code> retourne « vrai ».</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flatMap(func)</span></code>                      | Similaire à <code class="docutils literal notranslate"><span class="pre">map</span></code> mais chaque ligne du <em>Dataset</em> source peut être transformée en 0 ou plusieurs lignes ; retourne une séquence (<code class="docutils literal notranslate"><span class="pre">Seq</span></code>) plutôt qu’une seule ligne.                                              |</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sample(withReplacement,</span></code>            | Retourne un <em>Dataset</em> contenant une fraction aléatoire <code class="docutils literal notranslate"><span class="pre">fraction</span></code> du <em>Dataset</em> auquel la transformation s’applique, avec ou sans remplacement, avec une <code class="docutils literal notranslate"><span class="pre">seed</span></code> pour le générateur aléatoire.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">union(otherDataset)</span></code>                | Retourne un <em>Dataset</em> qui est l’union des lignes du <em>Dataset</em> source et du <em>Dataset</em> argument (<code class="docutils literal notranslate"><span class="pre">otherDataset</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">intersection(otherDataset)</span></code>         | Retourne un <em>Dataset</em> qui est l’intersection des lignes du <em>Dataset</em> source et du <em>Dataset</em> argument (<code class="docutils literal notranslate"><span class="pre">otherDataset</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distinct()</span></code>                         | Retourne un <em>Dataset</em> qui est obtenu du <em>Dataset</em> source en éliminant les doublons des lignes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">groupByKey(func)</span></code>                   | Pour un <em>Dataset</em>, calcule la clé par <code class="docutils literal notranslate"><span class="pre">func</span></code> et retourne un <em>KeyValueGroupedDataset</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">join(otherDataset,</span> <span class="pre">joinExprs,</span></code>      | Pour un <em>Dataset</em> jointure avec <code class="docutils literal notranslate"><span class="pre">otherDataset</span></code> de type <code class="docutils literal notranslate"><span class="pre">joinType</span></code> avec condition de jointure <code class="docutils literal notranslate"><span class="pre">joinExprs</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crossJoin(otherDataset)</span></code>            | Pour <em>Dataset</em> de type T et <code class="docutils literal notranslate"><span class="pre">otherDataset</span></code> de type U, retourne un <em>Dataset</em> de type (T, U) (produit cartésien).</p></li>
+</ul>
+</div>
+<div class="section" id="creation-de-dataset-stockage-de-dataset">
+<h3>Création de <em>Dataset</em>, stockage de <em>Dataset</em><a class="headerlink" href="#creation-de-dataset-stockage-de-dataset" title="Lien permanent vers ce titre">¶</a></h3>
+<dl class="simple">
+<dt>Il y a plusieurs possibilités pour créer un <em>Dataset</em> :</dt><dd><ol class="arabic simple">
+<li><p>À partir d’un RDD (<em>Resilient Distributed Dataset</em>) existant.</p></li>
+<li><p>À partir de données externes.</p></li>
+<li><p>Transformer un (ou plusieurs) <em>Dataset(s)</em> existant(s).</p></li>
+</ol>
+</dd>
+</dl>
+<p><a class="reference external" href="https://spark.apache.org/docs/latest/sql-programming-guide.html#interoperating-with-rdds">Plusieurs solutions</a> permettent d’obtenir un <em>Dataset / DataFrame</em> à partir d’un <em>RDD</em>. Le plus simple est de spécifier le schéma des données du <em>DataFrame</em> et ensuite d’appeler la méthode <code class="docutils literal notranslate"><span class="pre">.createDataFrame(rowRDD,</span> <span class="pre">schema)</span></code> de <code class="docutils literal notranslate"><span class="pre">SparkSession</span></code>. Afin d’obtenir un <em>RDD</em> à partir d’un <em>Dataset / DataFrame</em> il suffit d’appeler la méthode <code class="docutils literal notranslate"><span class="pre">.rdd</span></code> de <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> / <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code>.</p>
+<p>Spark permet de créer un <em>Dataset</em> à partir de toute source de données acceptée par Hadoop (fichier local, HDFS, HBase, etc.). Quelques exemples :</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SparkSession.read.textFile()</span></code> : lit le fichier donné en paramètre (sous forme d’URI) et construit un <em>Dataset</em> dont les lignes sont les lignes du fichier texte ;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SparkSession.readStream...</span></code> : construction de <em>Datasets</em> à partir d’un flux de données.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Si l’URI correspond à un fichier local, il faut s’assurer que le fichier est accessible avec le même URI aux <em>workers</em>.
+Toutes les méthodes Spark de création de <em>Dataset</em> à partir de fichiers peuvent fonctionner sur des répertoires, des fichiers compressés et utiliser des <em>wildcards</em>. Par exemple : <code class="docutils literal notranslate"><span class="pre">textFile(&quot;/my/directory&quot;)</span></code>, <code class="docutils literal notranslate"><span class="pre">textFile(&quot;/my/directory/*.txt&quot;)</span></code> et <code class="docutils literal notranslate"><span class="pre">textFile(&quot;/my/directory/*.gz&quot;)</span></code>.</p>
+</div>
+<p>Dans la configuration actuelle de Spark dans la salle de travaux pratiques, c’est le système de fichiers (<em>filesystem</em>) <strong>local</strong> et non HDFS (distribué) qui est utilisé par défaut. Si vous entrez simplement <code class="docutils literal notranslate"><span class="pre">.textFile(&quot;LICENSE&quot;)</span></code>, Spark cherchera le fichier dans le système de fichiers par défaut. Avec le préfixe <code class="docutils literal notranslate"><span class="pre">file://</span></code> on indique que le fichier à lire est sur le système de fichiers local, avec le préfixe <code class="docutils literal notranslate"><span class="pre">hdfs://</span></code> on indique qu’il s’agit plutôt de HDFS. L’utilisation d’un de ces préfixes exige l’emploi du chemin absolu vers le fichier correspondant.</p>
+<p>Un <em>Dataset</em> peut être sauvegardé en utilisant <code class="docutils literal notranslate"><span class="pre">Dataset.write...</span></code>, par exemple <code class="docutils literal notranslate"><span class="pre">Dataset.write.text(path)</span></code> sous format texte. <code class="docutils literal notranslate"><span class="pre">path</span></code> indique un répertoire du système de fichiers local (préfixe <code class="docutils literal notranslate"><span class="pre">file://</span></code>), HDFS (préfixe <code class="docutils literal notranslate"><span class="pre">hdfs://</span></code>) ou autre fichier supporté par Hadoop.</p>
+</div>
+</div>
+<div class="section" id="scala-concepts-de-base-avec-exemples">
+<h2>Scala : concepts de base avec exemples<a class="headerlink" href="#scala-concepts-de-base-avec-exemples" title="Lien permanent vers ce titre">¶</a></h2>
+<p>Scala est à la fois un langage objet pur, dans lequel chaque valeur est un objet (contrairement à Java), et un langage fonctionnel, chaque fonction étant également une valeur (donc un objet). Pour référence et un éventuel apprentissage plus approfondi du langage :</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="http://docs.scala-lang.org">Documentation Scala</a></p></li>
+<li><p><a class="reference external" href="http://docs.scala-lang.org/books.html">Livres sur Scala</a></p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="fonctions-anonymes">
+<h3>Fonctions anonymes<a class="headerlink" href="#fonctions-anonymes" title="Lien permanent vers ce titre">¶</a></h3>
+<p>Les « fonctions anonymes » sont très utiles dans la définition d’opérations simples à appliquer aux données. Les expressions vues plus haut, comme <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span></code>, <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">if</span> <span class="pre">(a</span> <span class="pre">&gt;</span> <span class="pre">b)</span> <span class="pre">a</span> <span class="pre">else</span> <span class="pre">b</span></code> ou <code class="docutils literal notranslate"><span class="pre">l</span> <span class="pre">=&gt;</span> <span class="pre">l.split(&quot;</span> <span class="pre">&quot;).size</span></code> sont des définitions de fonctions anonymes. Les deux premières fonctions ont deux arguments chacune, la troisième fonction a un seul argument. La définition <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span></code> est, pour des arguments qui sont des <code class="docutils literal notranslate"><span class="pre">Int</span></code>, une version courte de la définition suivante :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">new</span> <span class="nc">Function1</span><span class="o">[</span><span class="kt">Int</span>, <span class="kt">Int</span>, <span class="kt">Int</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">apply</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>(c’est une définition formelle, non directement interprétable, ne l’entrez pas au clavier)</p>
+<p>Il est possible de définir des fonctions anonymes avec plus de deux paramètres, par exemple <code class="docutils literal notranslate"><span class="pre">(x:</span> <span class="pre">Int,</span> <span class="pre">y:</span> <span class="pre">Int,</span> <span class="pre">z:</span> <span class="pre">Int)</span> <span class="pre">=&gt;</span> <span class="pre">x</span> <span class="pre">+</span> <span class="pre">y</span> <span class="pre">-</span> <span class="pre">z</span></code>. Une telle fonction peut être appelée directement :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="o">((</span><span class="n">x</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">z</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">-</span> <span class="n">z</span><span class="o">)(</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">)</span> <span class="c1">// exemple appel fonction anonyme</span>
+</pre></div>
+</div>
+<p>Enfin, une fonction anonyme peut n’avoir aucun paramètre, par exemple <code class="docutils literal notranslate"><span class="pre">()</span> <span class="pre">=&gt;</span> <span class="pre">{</span> <span class="pre">System.getProperty(&quot;user.dir&quot;)</span> <span class="pre">}</span></code>, qui peut être appelée directement :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="o">(()</span> <span class="k">=&gt;</span> <span class="o">{</span> <span class="nc">System</span><span class="o">.</span><span class="n">getProperty</span><span class="o">(</span><span class="s">&quot;user.dir&quot;</span><span class="o">)</span> <span class="o">})()</span>  <span class="c1">// exemple appel fonction anonyme</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Dans les expressions vues plus tôt, comme <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">b</span></code> employée par exemple dans <code class="docutils literal notranslate"><span class="pre">longueursLignes.reduce((a,</span> <span class="pre">b)</span> <span class="pre">=&gt;</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">b)</span></code>, le type des arguments n’était pas explicitement indiqué car il était donné par le type des lignes qui composent le <em>Dataset</em> <code class="docutils literal notranslate"><span class="pre">longueursLignes</span></code>.</p>
+</div>
+<div class="admonition-question admonition">
+<p class="admonition-title">Question :</p>
+<p>Séparez en mots la phrase « Stat Roma pristina nomine, nomina nuda tenemus » à l’aide d’une fonction anonyme.</p>
+</div>
+</div>
+<div class="section" id="listes-en-comprehension-sequence-comprehensions">
+<h3>Listes en compréhension (<em>Sequence Comprehensions</em>)<a class="headerlink" href="#listes-en-comprehension-sequence-comprehensions" title="Lien permanent vers ce titre">¶</a></h3>
+<p>Les « listes en compréhension » sont des listes dont le contenu est défini par filtrage du contenu d’une autre liste, contrairement à l’approche plus classique de la construction de liste par énumération de ses éléments.</p>
+<p>Scala propose une notation facile pour définir des listes par compréhension : <code class="docutils literal notranslate"><span class="pre">for</span> <span class="pre">(enumerators)</span> <span class="pre">yield</span> <span class="pre">e</span></code>, où <code class="docutils literal notranslate"><span class="pre">enumerators</span></code> est une liste de <em>enumerators</em> séparés par des « ; ». Un <em>enumerator</em> est soit un générateur qui introduit une ou plusieurs nouvelles variables, soit un filtre. Cette construction évalue l’expression <code class="docutils literal notranslate"><span class="pre">e</span></code> pour chaque association (<em>binding</em>) générée par les <em>enumerators</em> et retourne une séquence de ces valeurs.</p>
+<p>Voici un exemple :</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="n">odd</span><span class="o">(</span><span class="n">debut</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">fin</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=</span> <span class="k">for</span> <span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="n">debut</span> <span class="n">until</span> <span class="n">fin</span> <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="k">yield</span> <span class="n">i</span>
+<span class="n">println</span><span class="o">(</span><span class="n">odd</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="mi">20</span><span class="o">))</span>
+</pre></div>
+</div>
+<p>L’expression <code class="docutils literal notranslate"><span class="pre">for</span></code> dans la définition de la fonction <code class="docutils literal notranslate"><span class="pre">odd</span></code> introduit une nouvelle variable <code class="docutils literal notranslate"><span class="pre">i:</span> <span class="pre">Int</span></code> qui prend ensuite toutes les valeurs générées par l’itérateur <code class="docutils literal notranslate"><span class="pre">_</span> <span class="pre">until</span> <span class="pre">_</span></code> qui passent le test <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">i</span> <span class="pre">%</span> <span class="pre">2</span> <span class="pre">!=</span> <span class="pre">0</span></code> (ce test élimine les valeurs paires). Ici l’expression <code class="docutils literal notranslate"><span class="pre">e</span></code> de la syntaxe générale est réduite à la variable <code class="docutils literal notranslate"><span class="pre">i</span></code>. L’expression <code class="docutils literal notranslate"><span class="pre">for</span></code> retourne donc un tableau avec les nombres impairs entre <code class="docutils literal notranslate"><span class="pre">debut</span></code> et <code class="docutils literal notranslate"><span class="pre">fin</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table des matières</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="preambule.html">Préambule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursIntroduction.html">Cours - Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installationSpark.html">Installation de Spark</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursReductionVolume.html">Cours - Réduction du volume de données</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Travaux pratiques - Introduction à Spark et Scala</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#spark-concepts-de-base-avec-exemples">Spark : concepts de base avec exemples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lancement-de-l-interpreteur-de-commandes-en-scala-et-operations-simples">Lancement de l’interpréteur de commandes en Scala et opérations simples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dataset-et-dataframe"><em>Dataset</em> et <em>DataFrame</em></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#actions">Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transformations-et-persistance">Transformations et persistance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creation-de-dataset-stockage-de-dataset">Création de <em>Dataset</em>, stockage de <em>Dataset</em></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#scala-concepts-de-base-avec-exemples">Scala : concepts de base avec exemples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fonctions-anonymes">Fonctions anonymes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#listes-en-comprehension-sequence-comprehensions">Listes en compréhension (<em>Sequence Comprehensions</em>)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="coursReductionComplexite.html">Cours - Réduction de l’ordre de complexité</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpDonneesNumeriques.html">Travaux pratiques - Manipulation de données numériques. Exécution d’applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursSimilariteRecommandation.html">Cours - Recherche par similarité. Application aux systèmes de recommandation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpComposantesPrincipales.html">Travaux pratiques - Echantillonnage. Analyse en composantes principales</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpComposantesDiscriminantes.html">TP++ - Analyse factorielle discriminante - Etape descriptive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursClassificationAutomatique.html">Cours - Classification Automatique</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpClassificationAutomatique.html">Travaux pratiques - Classification automatique avec <em>k-means</em></a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursFouilleTexte.html">Cours - Fouille de données textuelles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpFouilleTexte.html">Travaux pratiques - Fouille de données textuelles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpNlp.html">TP++ - Traitement automatique des langues avec Spark NLP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpClassificationTweets.html">TP++ - Classification automatique de tweets avec des représentations Word2Vec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursFouilleFluxDonnees.html">Cours - Fouille de flux de données</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpFouilleFlux.html">Travaux pratiques - Fouille de flux de données</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursApprentissageLargeEchelle.html">Cours - Apprentissage supervisé à large échelle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpSVMlineaires.html">Travaux pratiques - SVM linéaires</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursFouilleGraphesReseauxSociaux.html">Cours - Fouille de graphes et réseaux sociaux (1)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpGraphes.html">Travaux pratiques - Fouille de réseaux sociaux, première partie</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursFouilleGraphesReseauxSociaux2.html">Cours - Fouille de graphes et réseaux sociaux (2)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpGraphesPetitsMondes.html">Travaux pratiques - Fouille de réseaux sociaux, deuxième partie</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursVisuGraphes.html">Cours - Visualisation de graphes et réseaux sociaux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpGephi.html">Travaux pratiques - Visualisation de graphes avec Gephi</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursVisualisationInformation.html">Cours - Visualisation d’information : historique, applications, outils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpIntroductionProcessing.html">Travaux pratiques - Introduction à Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursVisInfoEnjeuxPerceptifs.html">Cours - Visualisation d’information : Enjeux perceptifs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpCartographie.html">Travaux pratiques - Cartographie</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursVisInfoRepresentationsMultidimensionnelles.html">Cours - Visualisation d’information : Représentations multidimensionelles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpPetitsMultiples.html">Travaux pratiques - Petits multiples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="coursVisInfoInteraction.html">Cours - Visualisation d’information : Interaction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpTreemaps.html">Travaux pratiques - <em>Treemaps</em></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tpNuagesMots.html">TP++ - Nuages de mots</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Recherche</h3>
+            <form class="search" action="search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="coursReductionVolume.html" title="Cours - Réduction du volume de données"
+              >précédent</a> |
+            <a href="coursReductionComplexite.html" title="Cours - Réduction de l’ordre de complexité"
+              >suivant</a> |
+            <a href="genindex.html" title="Index général"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="_sources/tpSparkScala.rst.txt"
+                rel="nofollow">Montrer le code source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, Michel Crucianu, Pierre Cubaud, Raphaël Fournier-S&#39;niehotta, Marin Ferecatu - Cnam.
+      Mis à jour le févr. 10, 2020.
+      Créé avec <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

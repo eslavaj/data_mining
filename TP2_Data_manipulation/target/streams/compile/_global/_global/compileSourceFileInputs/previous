@@ -1,0 +1,1 @@
+["sbt.Task[scala.collection.immutable.Map[java.lang.String, scala.collection.Seq[scala.Tuple2[java.nio.file.Path, sbt.nio.FileStamp]]]]",{"2.11.12":{"hashes":[["/home/jeslava/msata/cnam_RCP216/data_mining/TP2_Data_manipulation/src/main/scala/SimpleProg.scala","be8ddbbcc7e6049074766968dea9b5fcb897ace6"]],"lastModifiedTimes":[]}}]
